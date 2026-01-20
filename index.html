@@ -3,133 +3,61 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Number Hunter</title>
+    <title>Number Hunter v2</title>
     <style>
-        body { margin: 0; overflow: hidden; background: #f0f0f0; font-family: 'Arial', sans-serif; }
-        
-        /* 広告エリア：pointer-events: none で下のボタンを触れるように設定 */
-        #ad-top { position: fixed; top: 0; left: 0; width: 100%; height: 110px; background: #ddd; z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none; }
-        #ad-bottom { position: fixed; bottom: 0; left: 0; width: 100%; height: 70px; background: #ddd; z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none; }
-        
-        /* 広告バナー自体はクリック可能に */
+        body { margin: 0; overflow: hidden; background: #f0f0f0; font-family: sans-serif; }
+        #ad-top { position: fixed; top: 0; left: 0; width: 100%; height: 110px; background: #333; z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none; }
+        #ad-bottom { position: fixed; bottom: 0; left: 0; width: 100%; height: 70px; background: #333; z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none; }
         #ad-box-1, #ad-box-2 { pointer-events: auto; }
-        .ad-label { color: #888; font-size: 8px; margin: 0; position: absolute; top: 2px; }
-        
-        /* ゲーム画面（広告を避けて配置） */
-        #game-container { margin-top: 110px; height: calc(100vh - 180px); position: relative; width: 100%; overflow: hidden; }
-        #ui { position: fixed; top: 120px; width: 100%; text-align: center; font-size: 20px; font-weight: bold; color: #333; pointer-events: none; z-index: 10; }
-        
-        .number-bubble {
-            position: absolute; width: 50px; height: 50px; background: #007bff; color: white;
-            border-radius: 50%; display: flex; align-items: center; justify-content: center;
-            font-weight: bold; font-size: 18px; box-shadow: 0 4px #0056b3; cursor: pointer;
-            transition: transform 0.1s;
-        }
-        .number-bubble:active { transform: scale(0.9); }
-
-        #startScreen {
-            position: fixed; top: 110px; left: 0; width: 100%; height: calc(100% - 180px);
-            background: rgba(255,255,255,0.9); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 50;
-        }
-        #goButton { padding: 15px 40px; font-size: 24px; background: #28a745; border: none; border-radius: 50px; color: white; font-weight: bold; cursor: pointer; }
+        #game-container { margin-top: 110px; height: calc(100vh - 180px); position: relative; width: 100%; background: #fff; }
+        #ui { position: fixed; top: 120px; width: 100%; text-align: center; font-size: 20px; font-weight: bold; color: #333; z-index: 10; pointer-events: none; }
+        .number-bubble { position: absolute; width: 55px; height: 55px; background: #007bff; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 20px; box-shadow: 0 4px #0056b3; }
+        #startScreen { position: fixed; top: 110px; left: 0; width: 100%; height: calc(100% - 180px); background: rgba(255,255,255,0.95); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 50; }
+        #goButton { padding: 15px 40px; font-size: 24px; background: #28a745; border: none; border-radius: 50px; color: white; font-weight: bold; }
     </style>
 </head>
 <body>
-
-    <div id="ad-top">
-        <p class="ad-label">SPONSOR</p>
-        <div id="ad-box-1">
-            <!-- admax -->
+    <div id="ad-top"><div id="ad-box-1"><!-- admax -->
 <script src="https://adm.shinobi.jp/s/60c8ad67627b044ec8c90df49c3d4ed1"></script>
-<!-- admax -->
-        </div>
-    </div>
-
-    <div id="ad-bottom">
-        <p class="ad-label">SPONSOR</p>
-        <div id="ad-box-2">
-            <!-- admax -->
+<!-- admax --></div></div>
+    <div id="ad-bottom"><div id="ad-box-2"><!-- admax -->
 <script src="https://adm.shinobi.jp/s/d404b7e80d955f304755c08c4983af3f"></script>
-<!-- admax -->
-        </div>
-    </div>
-
-    <div id="ui">次の数字: <span id="next-num">1</span></div>
-
-    <div id="startScreen">
-        <h1 style="color:#28a745;">NUMBER HUNTER</h1>
-        <p>1から順番に数字をタップ！</p>
-        <button id="goButton">START!</button>
-    </div>
-
+<!-- admax --></div></div>
+    <div id="ui">Next: <span id="next-num">1</span></div>
+    <div id="startScreen"><button id="goButton">START</button></div>
     <div id="game-container"></div>
-
     <script>
         const container = document.getElementById("game-container");
         const nextDisplay = document.getElementById("next-num");
-        const startScreen = document.getElementById("startScreen");
-        const goButton = document.getElementById("goButton");
-
-        let currentTarget = 1;
-        let gameActive = false;
-        let spawnInterval;
-
-        goButton.onclick = () => {
-            startScreen.style.display = "none";
-            gameActive = true;
-            currentTarget = 1;
-            nextDisplay.innerText = currentTarget;
-            container.innerHTML = "";
-            startGame();
+        let currentTarget = 1, gameActive = false, nextSpawnValue = 1;
+        document.getElementById("goButton").onclick = () => {
+            document.getElementById("startScreen").style.display = "none";
+            gameActive = true; currentTarget = 1; nextSpawnValue = 1;
+            nextDisplay.innerText = 1; container.innerHTML = "";
+            for(let i=0; i<8; i++) spawnNumber();
         };
-
-        function startGame() {
-            // 最初から数個表示
-            for(let i=0; i<5; i++) spawnNumber();
-            // その後、定期的に新しい数字を追加
-            spawnInterval = setInterval(() => {
-                if(container.childElementCount < 20) spawnNumber();
-            }, 1000);
-        }
-
-        let nextSpawnValue = 1;
         function spawnNumber() {
             if(!gameActive) return;
             const val = nextSpawnValue++;
             const bubble = document.createElement("div");
-            bubble.className = "number-bubble";
-            bubble.innerText = val;
-            
-            // ランダムな位置（広告に被らない範囲）
-            const maxX = container.clientWidth - 60;
-            const maxY = container.clientHeight - 60;
+            bubble.className = "number-bubble"; bubble.innerText = val;
+            const maxX = container.clientWidth - 65;
+            const maxY = container.clientHeight - 70; // 広告を避けるマージン
             bubble.style.left = Math.random() * maxX + "px";
             bubble.style.top = Math.random() * maxY + "px";
-
             bubble.onclick = () => {
                 if(val === currentTarget) {
-                    bubble.remove();
-                    currentTarget++;
-                    nextDisplay.innerText = currentTarget;
-                    // 正解するたびに新しく補充
+                    bubble.remove(); currentTarget++; nextDisplay.innerText = currentTarget;
                     spawnNumber();
-                } else {
-                    // 間違えたら一瞬赤くする
-                    bubble.style.background = "#dc3545";
-                    setTimeout(() => { bubble.style.background = "#007bff"; }, 200);
                 }
             };
-
             container.appendChild(bubble);
         }
-
-        // --- 30秒ごとに広告を切り替える ---
         setInterval(() => {
             ["ad-box-1", "ad-box-2"].forEach(id => {
                 const box = document.getElementById(id);
                 if (box && box.innerHTML.trim() !== "★") {
-                    const tag = box.innerHTML;
-                    box.innerHTML = "";
+                    const tag = box.innerHTML; box.innerHTML = "";
                     setTimeout(() => { box.innerHTML = tag; }, 100);
                 }
             });
