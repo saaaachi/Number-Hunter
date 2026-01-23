@@ -5,63 +5,97 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Number Hunter v2</title>
     <style>
-        body { margin: 0; overflow: hidden; background: #f0f0f0; font-family: sans-serif; }
-        #ad-top { position: fixed; top: 0; left: 0; width: 100%; height: 110px; background: #333; z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none; }
-        #ad-bottom { position: fixed; bottom: 0; left: 0; width: 100%; height: 70px; background: #333; z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none; }
-        #ad-box-1, #ad-box-2 { pointer-events: auto; }
-        #game-container { margin-top: 110px; height: calc(100vh - 180px); position: relative; width: 100%; background: #fff; }
-        #ui { position: fixed; top: 120px; width: 100%; text-align: center; font-size: 20px; font-weight: bold; color: #333; z-index: 10; pointer-events: none; }
-        .number-bubble { position: absolute; width: 55px; height: 55px; background: #007bff; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 20px; box-shadow: 0 4px #0056b3; }
-        #startScreen { position: fixed; top: 110px; left: 0; width: 100%; height: calc(100% - 180px); background: rgba(255,255,255,0.95); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 50; }
-        #goButton { padding: 15px 40px; font-size: 24px; background: #28a745; border: none; border-radius: 50px; color: white; font-weight: bold; }
+        body { margin: 0; overflow: hidden; background: #f0f0f0; font-family: sans-serif; touch-action: none; }
+        
+        /* 広告エリア：高さを150pxに設定（中サイズ対応） */
+        #ad-top, #ad-bottom { 
+            position: fixed; left: 0; width: 100%; height: 150px; 
+            background: #333; z-index: 100; display: flex; align-items: center; justify-content: center; 
+        }
+        #ad-top { top: 0; }
+        #ad-bottom { bottom: 0; }
+        
+        iframe { border: none; width: 100%; height: 150px; }
+
+        /* ゲームコンテナ：上下150pxを避けて配置 */
+        #game-container { margin-top: 150px; height: calc(100vh - 300px); position: relative; width: 100%; background: #fff; overflow: hidden; }
+        
+        #ui { position: fixed; top: 160px; width: 100%; text-align: center; font-size: 24px; font-weight: bold; color: #333; z-index: 10; pointer-events: none; text-shadow: 1px 1px 2px white; }
+        
+        .number-bubble { position: absolute; width: 55px; height: 55px; background: #007bff; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 22px; box-shadow: 0 4px #0056b3; cursor: pointer; user-select: none; }
+        .number-bubble:active { transform: scale(0.9); background: #0056b3; }
+
+        #startScreen { position: fixed; top: 150px; left: 0; width: 100%; height: calc(100vh - 300px); background: rgba(255,255,255,0.95); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 50; }
+        #goButton { padding: 15px 40px; font-size: 24px; background: #28a745; border: none; border-radius: 50px; color: white; font-weight: bold; box-shadow: 0 4px #1e7e34; }
     </style>
 </head>
 <body>
-    <div id="ad-top"><div id="ad-box-1"><!-- admax -->
-<script src="https://adm.shinobi.jp/s/60c8ad67627b044ec8c90df49c3d4ed1"></script>
-<!-- admax --></div></div>
-    <div id="ad-bottom"><div id="ad-box-2"><!-- admax -->
-<script src="https://adm.shinobi.jp/s/d404b7e80d955f304755c08c4983af3f"></script>
-<!-- admax --></div></div>
+    <div id="ad-top"><iframe id="frame-top" src="ad.html"></iframe></div>
+    <div id="ad-bottom"><iframe id="frame-bottom" src="ad.html"></iframe></div>
+
     <div id="ui">Next: <span id="next-num">1</span></div>
-    <div id="startScreen"><button id="goButton">START</button></div>
+    
+    <div id="startScreen">
+        <h1 style="color:#28a745; margin-bottom:10px;">NUMBER HUNTER</h1>
+        <p style="margin-bottom:20px;">数字を順番にタップしよう！</p>
+        <button id="goButton">START</button>
+    </div>
+
     <div id="game-container"></div>
+
     <script>
         const container = document.getElementById("game-container");
         const nextDisplay = document.getElementById("next-num");
+        const startScreen = document.getElementById("startScreen");
         let currentTarget = 1, gameActive = false, nextSpawnValue = 1;
+
         document.getElementById("goButton").onclick = () => {
-            document.getElementById("startScreen").style.display = "none";
+            startScreen.style.display = "none";
             gameActive = true; currentTarget = 1; nextSpawnValue = 1;
             nextDisplay.innerText = 1; container.innerHTML = "";
+            // 最初に8個の数字をばらまく
             for(let i=0; i<8; i++) spawnNumber();
         };
+
         function spawnNumber() {
             if(!gameActive) return;
             const val = nextSpawnValue++;
             const bubble = document.createElement("div");
             bubble.className = "number-bubble"; bubble.innerText = val;
-            const maxX = container.clientWidth - 65;
-            const maxY = container.clientHeight - 70; // 広告を避けるマージン
+            
+            // バブルが画面からはみ出さないように座標計算
+            const maxX = container.clientWidth - 60;
+            const maxY = container.clientHeight - 60;
             bubble.style.left = Math.random() * maxX + "px";
             bubble.style.top = Math.random() * maxY + "px";
-            bubble.onclick = () => {
+
+            // タップ判定：pointerdownを使用（スマホ対応）
+            bubble.onpointerdown = (e) => {
+                e.preventDefault();
                 if(val === currentTarget) {
-                    bubble.remove(); currentTarget++; nextDisplay.innerText = currentTarget;
-                    spawnNumber();
+                    bubble.style.pointerEvents = "none";
+                    bubble.style.transform = "scale(1.2)";
+                    bubble.style.opacity = "0";
+                    setTimeout(() => bubble.remove(), 100);
+                    
+                    currentTarget++; 
+                    nextDisplay.innerText = currentTarget;
+                    spawnNumber(); // 次の数字を補充
                 }
             };
             container.appendChild(bubble);
         }
+
+        // 🚀 30秒ごとにad.htmlを強制リフレッシュ
         setInterval(() => {
-            ["ad-box-1", "ad-box-2"].forEach(id => {
-                const box = document.getElementById(id);
-                if (box && box.innerHTML.trim() !== "★") {
-                    const tag = box.innerHTML; box.innerHTML = "";
-                    setTimeout(() => { box.innerHTML = tag; }, 100);
+            ["frame-top", "frame-bottom"].forEach(id => {
+                const f = document.getElementById(id);
+                if(f) {
+                    const s = f.src; f.src = "about:blank";
+                    setTimeout(() => f.src = s, 100);
                 }
             });
-        }, 20050);
+        }, 29000);
     </script>
 </body>
 </html>
