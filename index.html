@@ -7,7 +7,6 @@
     <style>
         body { margin: 0; overflow: hidden; background: #f0f0f0; font-family: sans-serif; touch-action: none; }
         
-        /* 広告エリア：高さを150pxに設定（中サイズ対応） */
         #ad-top, #ad-bottom { 
             position: fixed; left: 0; width: 100%; height: 150px; 
             background: #333; z-index: 100; display: flex; align-items: center; justify-content: center; 
@@ -17,7 +16,6 @@
         
         iframe { border: none; width: 100%; height: 150px; }
 
-        /* ゲームコンテナ：上下150pxを避けて配置 */
         #game-container { margin-top: 150px; height: calc(100vh - 300px); position: relative; width: 100%; background: #fff; overflow: hidden; }
         
         #ui { position: fixed; top: 160px; width: 100%; text-align: center; font-size: 24px; font-weight: bold; color: #333; z-index: 10; pointer-events: none; text-shadow: 1px 1px 2px white; }
@@ -26,7 +24,16 @@
         .number-bubble:active { transform: scale(0.9); background: #0056b3; }
 
         #startScreen { position: fixed; top: 150px; left: 0; width: 100%; height: calc(100vh - 300px); background: rgba(255,255,255,0.95); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 50; }
-        #goButton { padding: 15px 40px; font-size: 24px; background: #28a745; border: none; border-radius: 50px; color: white; font-weight: bold; box-shadow: 0 4px #1e7e34; }
+        
+        /* ボタン類の共通スタイル */
+        .menu-btn { 
+            padding: 15px 40px; font-size: 20px; border: none; border-radius: 50px; 
+            color: white; font-weight: bold; cursor: pointer; text-decoration: none; 
+            display: inline-block; margin: 10px; text-align: center;
+        }
+        #goButton { background: #28a745; box-shadow: 0 4px #1e7e34; }
+        /* リンク用ボタン（ピンク系で目立たせる） */
+        .link-btn { background: #ff4081; box-shadow: 0 4px #c2185b; font-size: 18px; }
     </style>
 </head>
 <body>
@@ -38,7 +45,10 @@
     <div id="startScreen">
         <h1 style="color:#28a745; margin-bottom:10px;">NUMBER HUNTER</h1>
         <p style="margin-bottom:20px;">数字を順番にタップしよう！</p>
-        <button id="goButton">START</button>
+        
+        <button id="goButton" class="menu-btn">START</button>
+        
+        <a href="https://saaaachi.github.io/Namber-Order/" class="menu-btn link-btn">他のゲームはこちら</a>
     </div>
 
     <div id="game-container"></div>
@@ -53,7 +63,6 @@
             startScreen.style.display = "none";
             gameActive = true; currentTarget = 1; nextSpawnValue = 1;
             nextDisplay.innerText = 1; container.innerHTML = "";
-            // 最初に8個の数字をばらまく
             for(let i=0; i<8; i++) spawnNumber();
         };
 
@@ -63,13 +72,11 @@
             const bubble = document.createElement("div");
             bubble.className = "number-bubble"; bubble.innerText = val;
             
-            // バブルが画面からはみ出さないように座標計算
             const maxX = container.clientWidth - 60;
             const maxY = container.clientHeight - 60;
             bubble.style.left = Math.random() * maxX + "px";
             bubble.style.top = Math.random() * maxY + "px";
 
-            // タップ判定：pointerdownを使用（スマホ対応）
             bubble.onpointerdown = (e) => {
                 e.preventDefault();
                 if(val === currentTarget) {
@@ -80,13 +87,12 @@
                     
                     currentTarget++; 
                     nextDisplay.innerText = currentTarget;
-                    spawnNumber(); // 次の数字を補充
+                    spawnNumber();
                 }
             };
             container.appendChild(bubble);
         }
 
-        // 🚀 30秒ごとにad.htmlを強制リフレッシュ
         setInterval(() => {
             ["frame-top", "frame-bottom"].forEach(id => {
                 const f = document.getElementById(id);
