@@ -6,40 +6,23 @@
     <title>Number Hunter v2</title>
     <style>
         body { margin: 0; overflow: hidden; background: #f0f0f0; font-family: sans-serif; touch-action: none; }
-        
-        /* 広告エリア固定（上下） */
-        #ad-top, #ad-bottom { 
-            position: fixed; left: 0; width: 100%; height: 150px; 
-            background: #333; z-index: 100; display: flex; align-items: center; justify-content: center; 
-        }
-        #ad-top { top: 0; }
-        #ad-bottom { bottom: 0; }
+        #ad-top, #ad-bottom { position: fixed; left: 0; width: 100%; height: 150px; background: #333; z-index: 100; display: flex; align-items: center; justify-content: center; }
+        #ad-top { top: 0; } #ad-bottom { bottom: 0; }
         iframe { border: none; width: 100%; height: 150px; }
-
         #game-container { margin-top: 150px; height: calc(100vh - 300px); position: relative; width: 100%; background: #fff; overflow: hidden; }
         #ui { position: fixed; top: 160px; width: 100%; text-align: center; font-size: 24px; font-weight: bold; color: #333; z-index: 10; pointer-events: none; }
         .number-bubble { position: absolute; width: 55px; height: 55px; background: #007bff; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 22px; box-shadow: 0 4px #0056b3; cursor: pointer; }
-
-        /* メニュー画面（重なり防止レイアウト） */
+        
         #menuScreen { 
             position: fixed; top: 150px; left: 0; width: 100%; height: calc(100vh - 300px); 
             background: rgba(255,255,255,0.98); display: flex; flex-direction: column; 
-            align-items: center; justify-content: space-around; z-index: 200; 
-            padding: 10px 0; box-sizing: border-box;
+            align-items: center; justify-content: space-around; z-index: 200; padding: 10px 0; box-sizing: border-box;
         }
-
-        /* 中央広告エリア（最初は非表示） */
-        #ad-middle {
-            width: 300px; height: 250px; display: none; /* 初期状態は隠す */
-            align-items: center; justify-content: center; flex-shrink: 0;
-        }
+        /* 直接貼り付け広告用コンテナ */
+        #ad-middle-container { width: 336px; min-height: 250px; display: none; flex-shrink: 0; justify-content: center; align-items: center; overflow: hidden; }
         
         .btn-group { display: flex; flex-direction: column; align-items: center; width: 100%; gap: 8px; }
-        .menu-btn { 
-            padding: 12px 30px; font-size: 18px; border: none; border-radius: 50px; 
-            color: white; font-weight: bold; cursor: pointer; text-decoration: none; 
-            width: 240px; text-align: center; box-sizing: border-box;
-        }
+        .menu-btn { padding: 12px 30px; font-size: 18px; border: none; border-radius: 50px; color: white; font-weight: bold; cursor: pointer; text-decoration: none; width: 240px; text-align: center; }
         #goButton { background: #28a745; box-shadow: 0 4px #1e7e34; }
         .link-btn { background: #ff4081; box-shadow: 0 4px #c2185b; }
     </style>
@@ -47,7 +30,6 @@
 <body>
     <div id="ad-top"><iframe src="ad.html"></iframe></div>
     <div id="ad-bottom"><iframe src="ad.html"></iframe></div>
-
     <div id="ui">Next: <span id="next-num">1</span></div>
     
     <div id="menuScreen">
@@ -56,8 +38,8 @@
             <p id="menuMsg" style="margin:2px 0;">数字を順番にタップ！</p>
         </div>
 
-        <div id="ad-middle">
-            <iframe id="frame-middle" src="" style="width:300px; height:250px; border:none;"></iframe>
+        <div id="ad-middle-container">
+            <script src="https://adm.shinobi.jp/s/1032eae8cb11c685ef9a7bad656b80ee"></script>
         </div>
 
         <div class="btn-group">
@@ -69,21 +51,12 @@
     <div id="game-container"></div>
 
     <script>
-        const container = document.getElementById("game-container"),
-              nextDisplay = document.getElementById("next-num"),
-              menuScreen = document.getElementById("menuScreen"),
-              menuTitle = document.getElementById("menuTitle"),
-              menuMsg = document.getElementById("menuMsg"),
-              goButton = document.getElementById("goButton"),
-              adMiddle = document.getElementById("ad-middle"),
-              frameMiddle = document.getElementById("frame-middle");
-        
+        const container = document.getElementById("game-container"), nextDisplay = document.getElementById("next-num"), menuScreen = document.getElementById("menuScreen"), menuTitle = document.getElementById("menuTitle"), menuMsg = document.getElementById("menuMsg"), goButton = document.getElementById("goButton"), adMid = document.getElementById("ad-middle-container");
         let currentTarget = 1, gameActive = false, nextSpawnValue = 1;
 
         goButton.onclick = () => {
             menuScreen.style.display = "none";
-            adMiddle.style.display = "none"; // プレイ中は中央枠を消す
-            frameMiddle.src = ""; // 広告の読み込みも停止
+            adMid.style.display = "none";
             gameActive = true; currentTarget = 1; nextSpawnValue = 1;
             nextDisplay.innerText = 1; container.innerHTML = "";
             for(let i=0; i<8; i++) spawnNumber();
@@ -91,42 +64,34 @@
 
         function spawnNumber() {
             if(!gameActive) return;
-            const val = nextSpawnValue++;
-            const bubble = document.createElement("div");
+            const val = nextSpawnValue++, bubble = document.createElement("div");
             bubble.className = "number-bubble"; bubble.innerText = val;
             const maxX = container.clientWidth - 60, maxY = container.clientHeight - 60;
-            bubble.style.left = Math.random() * maxX + "px";
-            bubble.style.top = Math.random() * maxY + "px";
-
+            bubble.style.left = Math.random() * maxX + "px"; bubble.style.top = Math.random() * maxY + "px";
             bubble.onpointerdown = (e) => {
-                e.preventDefault();
-                if(!gameActive) return;
+                e.preventDefault(); if(!gameActive) return;
                 if(val === currentTarget) {
-                    bubble.style.pointerEvents = "none";
-                    bubble.style.opacity = "0";
-                    setTimeout(() => bubble.remove(), 100);
-                    currentTarget++; nextDisplay.innerText = currentTarget;
-                    spawnNumber();
-                } else {
-                    gameOver();
-                }
+                    bubble.style.pointerEvents = "none"; bubble.style.opacity = "0";
+                    setTimeout(() => bubble.remove(), 100); currentTarget++; nextDisplay.innerText = currentTarget; spawnNumber();
+                } else { gameOver(); }
             };
             container.appendChild(bubble);
         }
 
         function gameOver() {
             gameActive = false;
-            menuTitle.innerText = "GAME OVER";
-            menuTitle.style.color = "#f44336";
-            menuMsg.innerText = "SCORE: " + (currentTarget - 1);
-            goButton.innerText = "RETRY";
-            
-            // 【重要】ゲームオーバー時だけ中央広告を表示
-            adMiddle.style.display = "flex";
-            frameMiddle.src = "ad.html"; // ここで広告を読み込む
-            
+            menuTitle.innerText = "GAME OVER"; menuTitle.style.color = "#f44336";
+            menuMsg.innerText = "SCORE: " + (currentTarget - 1); goButton.innerText = "RETRY";
+            adMid.style.display = "flex"; // ゲームオーバー時のみ表示
             menuScreen.style.display = "flex";
         }
+
+        // 上下の広告リフレッシュ（30秒）
+        setInterval(() => {
+            document.querySelectorAll('iframe').forEach(f => {
+                const s = f.src; f.src = "about:blank"; setTimeout(() => f.src = s, 100);
+            });
+        }, 30000);
     </script>
 </body>
 </html>
