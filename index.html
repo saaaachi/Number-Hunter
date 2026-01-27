@@ -5,20 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Number Hunter v2</title>
     <style>
-        /* 画面全体を縦に3分割して重なりを防ぐ */
+        /* 画面全体を縦に「上・中・下」で完全分離 */
         body { 
             margin: 0; height: 100vh; display: flex; flex-direction: column; 
             background: #f0f0f0; font-family: sans-serif; overflow: hidden; touch-action: none; 
         }
         
-        /* 上下の広告枠：高さ固定 */
+        /* 上下の広告枠：高さを固定して絶対に動かさない */
         #ad-top, #ad-bottom { 
-            width: 100%; height: 130px; background: #333; 
+            width: 100%; height: 120px; background: #333; 
             display: flex; align-items: center; justify-content: center; flex-shrink: 0; z-index: 100;
         }
         iframe { border: none; width: 100%; height: 100%; }
 
-        /* ゲーム画面：残りの隙間を全部使う */
+        /* ゲームエリア：上下広告の間のスペースをすべて使う */
         #game-area { 
             flex-grow: 1; position: relative; width: 100%; background: #fff; overflow: hidden; 
         }
@@ -26,20 +26,22 @@
         #ui { position: absolute; top: 10px; width: 100%; text-align: center; font-size: 22px; font-weight: bold; pointer-events: none; z-index: 10; }
         .number-bubble { position: absolute; width: 55px; height: 55px; background: #007bff; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 22px; box-shadow: 0 4px #0056b3; cursor: pointer; }
         
-        /* メニュー（ゲームオーバー）画面 */
+        /* メニュー画面：広告とボタンを縦に並べる */
         #menuScreen { 
             position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
             background: rgba(255,255,255,0.98); display: flex; flex-direction: column; 
-            align-items: center; justify-content: center; z-index: 200; gap: 15px;
+            align-items: center; justify-content: space-evenly; z-index: 200; padding: 20px 0; box-sizing: border-box;
         }
 
-        /* 真ん中の広告枠：サイズ固定 */
+        /* 修正の要：真ん中広告の「檻」 */
         #ad-middle-container { 
-            width: 300px; min-height: 250px; background: #eee;
-            display: none; justify-content: center; align-items: center; overflow: hidden;
+            width: 300px; height: 250px; background: #eee;
+            display: none; justify-content: center; align-items: center; 
+            overflow: hidden; position: relative; flex-shrink: 0;
+            border: 1px solid #ddd;
         }
         
-        .btn-group { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+        .btn-group { display: flex; flex-direction: column; align-items: center; gap: 10px; flex-shrink: 0; }
         .menu-btn { padding: 12px 30px; font-size: 18px; border: none; border-radius: 50px; color: white; font-weight: bold; cursor: pointer; text-decoration: none; width: 240px; text-align: center; }
         #goButton { background: #28a745; box-shadow: 0 4px #1e7e34; }
         .link-btn { background: #ff4081; box-shadow: 0 4px #c2185b; }
@@ -75,7 +77,7 @@
         const container = document.getElementById("game-container"), nextDisplay = document.getElementById("next-num"), menuScreen = document.getElementById("menuScreen"), menuTitle = document.getElementById("menuTitle"), menuMsg = document.getElementById("menuMsg"), goButton = document.getElementById("goButton"), adMid = document.getElementById("ad-middle-container"), btnGroup = document.getElementById("btnGroup");
         let currentTarget = 1, gameActive = false, nextSpawnValue = 1;
 
-        // 初期状態：ボタンは出す、真ん中広告は隠す
+        // 初期表示の設定
         window.onload = () => { adMid.style.display = "none"; };
 
         goButton.onclick = () => {
@@ -106,20 +108,19 @@
             menuTitle.innerText = "GAME OVER"; menuTitle.style.color = "#f44336";
             menuMsg.innerText = "SCORE: " + (currentTarget - 1); goButton.innerText = "RETRY";
             
-            // 修正：ボタンを一旦隠して、広告エリアを表示
+            // 0.5秒待機の設定
             btnGroup.style.opacity = "0";
             btnGroup.style.pointerEvents = "none";
             adMid.style.display = "flex"; 
             menuScreen.style.display = "flex";
 
-            // 0.5秒後にボタンを出す
             setTimeout(() => {
                 btnGroup.style.opacity = "1";
                 btnGroup.style.pointerEvents = "auto";
             }, 500);
         }
 
-        // 上下広告のリフレッシュ
+        // 上下のリフレッシュ
         setInterval(() => {
             document.querySelectorAll('#ad-top iframe, #ad-bottom iframe').forEach(f => {
                 const s = f.src; f.src = "about:blank"; setTimeout(() => f.src = s, 100);
