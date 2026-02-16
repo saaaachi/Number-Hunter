@@ -3,22 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Number Hunter v2</title>
+    <title>Number Hunter v2 - Ad Deluxe</title>
     <style>
-        /* 画面全体を縦に「上・中・下」で完全分離 */
         body { 
             margin: 0; height: 100vh; display: flex; flex-direction: column; 
             background: #f0f0f0; font-family: sans-serif; overflow: hidden; touch-action: none; 
+            position: fixed; width: 100%;
         }
         
-        /* 上下の広告枠：高さを固定して絶対に動かさない */
+        /* 上下の広告枠 */
         #ad-top, #ad-bottom { 
-            width: 100%; height: 120px; background: #333; 
+            width: 100%; height: 100px; background: #333; 
             display: flex; align-items: center; justify-content: center; flex-shrink: 0; z-index: 100;
         }
         iframe { border: none; width: 100%; height: 100%; }
 
-        /* ゲームエリア：上下広告の間のスペースをすべて使う */
+        /* ゲームエリア */
         #game-area { 
             flex-grow: 1; position: relative; width: 100%; background: #fff; overflow: hidden; 
         }
@@ -26,19 +26,25 @@
         #ui { position: absolute; top: 10px; width: 100%; text-align: center; font-size: 22px; font-weight: bold; pointer-events: none; z-index: 10; }
         .number-bubble { position: absolute; width: 55px; height: 55px; background: #007bff; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 22px; box-shadow: 0 4px #0056b3; cursor: pointer; }
         
-        /* メニュー画面：広告とボタンを縦に並べる */
+        /* メニュー画面 */
         #menuScreen { 
             position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
             background: rgba(255,255,255,0.98); display: flex; flex-direction: column; 
             align-items: center; justify-content: space-evenly; z-index: 200; padding: 20px 0; box-sizing: border-box;
         }
 
-        /* 修正の要：真ん中広告の「檻」 */
-        #ad-middle-container { 
-            width: 300px; height: 250px; background: #eee;
-            display: none; justify-content: center; align-items: center; 
-            overflow: hidden; position: relative; flex-shrink: 0;
-            border: 1px solid #ddd;
+        /* 大広告オーバーレイ */
+        #bigAdScreen {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9); z-index: 2000;
+            display: none; justify-content: center; align-items: center;
+        }
+        .ad-frame-wrapper { width: 90%; height: 80%; position: relative; }
+        .ad-close-btn { 
+            position: absolute; top: -10px; right: -10px; color: white; font-size: 30px; 
+            font-weight: bold; cursor: pointer; background: rgba(0,0,0,0.5); 
+            width: 40px; height: 40px; border-radius: 50%; display: none;
+            align-items: center; justify-content: center; z-index: 2100;
         }
         
         .btn-group { display: flex; flex-direction: column; align-items: center; gap: 10px; flex-shrink: 0; }
@@ -48,7 +54,7 @@
     </style>
 </head>
 <body>
-    <div id="ad-top"><iframe src="ad.html"></iframe></div>
+    <div id="ad-top"><iframe id="ifr-top" src="ad.html?pos=top"></iframe></div>
 
     <div id="game-area">
         <div id="ui">Next: <span id="next-num">1</span></div>
@@ -59,26 +65,36 @@
                 <p id="menuMsg" style="margin:5px 0;">数字を順番にタップ！</p>
             </div>
 
-            <div id="ad-middle-container">
-                <script src="https://adm.shinobi.jp/s/1e6de436ea850948e238e975a93767eb"></script>
-            </div>
-
             <div class="btn-group" id="btnGroup">
                 <button id="goButton" class="menu-btn">START</button>
                 <a href="https://saaaachi.github.io/" class="menu-btn link-btn">他のゲームはこちら</a>
             </div>
         </div>
+
+        <div id="bigAdScreen">
+            <div class="ad-frame-wrapper">
+                <div id="ad-close-btn" class="ad-close-btn" onclick="closeAd()">×</div>
+                <iframe id="ad-large-frame" src="" style="width:100%; height:100%; border:none;"></iframe>
+            </div>
+        </div>
+
         <div id="game-container" style="width:100%; height:100%;"></div>
     </div>
 
-    <div id="ad-bottom"><iframe src="ad.html"></iframe></div>
+    <div id="ad-bottom"><iframe id="ifr-bottom" src="ad.html?pos=bottom"></iframe></div>
 
     <script>
-        const container = document.getElementById("game-container"), nextDisplay = document.getElementById("next-num"), menuScreen = document.getElementById("menuScreen"), menuTitle = document.getElementById("menuTitle"), menuMsg = document.getElementById("menuMsg"), goButton = document.getElementById("goButton"), adMid = document.getElementById("ad-middle-container"), btnGroup = document.getElementById("btnGroup");
-        let currentTarget = 1, gameActive = false, nextSpawnValue = 1;
+        // --- 広告リフレッシュタイマー（30秒） ---
+        setInterval(() => {
+            const topAd = document.getElementById('ifr-top');
+            const bottomAd = document.getElementById('ifr-bottom');
+            const now = Date.now();
+            if(topAd) topAd.src = 'ad.html?pos=top&t=' + now;
+            if(bottomAd) bottomAd.src = 'ad.html?pos=bottom&t=' + now;
+        }, 30000);
 
-        // 初期表示の設定
-        window.onload = () => { adMid.style.display = "none"; };
+        const container = document.getElementById("game-container"), nextDisplay = document.getElementById("next-num"), menuScreen = document.getElementById("menuScreen"), menuTitle = document.getElementById("menuTitle"), menuMsg = document.getElementById("menuMsg"), goButton = document.getElementById("goButton"), btnGroup = document.getElementById("btnGroup");
+        let currentTarget = 1, gameActive = false, nextSpawnValue = 1, playCount = 0;
 
         goButton.onclick = () => {
             menuScreen.style.display = "none";
@@ -105,27 +121,34 @@
 
         function gameOver() {
             gameActive = false;
+            playCount++; // プレイ回数を加算
             menuTitle.innerText = "GAME OVER"; menuTitle.style.color = "#f44336";
             menuMsg.innerText = "SCORE: " + (currentTarget - 1); goButton.innerText = "RETRY";
             
-            // 0.5秒待機の設定
-            btnGroup.style.opacity = "0";
-            btnGroup.style.pointerEvents = "none";
-            adMid.style.display = "flex"; 
-            menuScreen.style.display = "flex";
-
-            setTimeout(() => {
-                btnGroup.style.opacity = "1";
-                btnGroup.style.pointerEvents = "auto";
-            }, 500);
+            // ★ゆったり設定に変更（初回3回目、以降7回おき）
+            if (playCount === 3 || (playCount > 3 && (playCount - 3) % 7 === 0)) {
+                showBigAd();
+            } else {
+                menuScreen.style.display = "flex";
+            }
         }
 
-        // 上下のリフレッシュ
-        setInterval(() => {
-            document.querySelectorAll('#ad-top iframe, #ad-bottom iframe').forEach(f => {
-                const s = f.src; f.src = "about:blank"; setTimeout(() => f.src = s, 100);
-            });
-        }, 30000);
+        // --- 大広告システム（ad.large.html） ---
+        function showBigAd() {
+            const screen = document.getElementById("bigAdScreen");
+            const closeBtn = document.getElementById("ad-close-btn");
+            const frame = document.getElementById("ad-large-frame");
+            frame.src = "ad.large.html?t=" + Date.now();
+            screen.style.display = "flex";
+            closeBtn.style.display = "none";
+            setTimeout(() => { closeBtn.style.display = "flex"; }, 5000); // 5秒待機
+        }
+
+        function closeAd() {
+            document.getElementById("bigAdScreen").style.display = "none";
+            document.getElementById("ad-large-frame").src = "";
+            menuScreen.style.display = "flex";
+        }
     </script>
 </body>
 </html>
