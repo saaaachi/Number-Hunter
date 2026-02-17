@@ -24,13 +24,19 @@
         }
         
         #ui { position: absolute; top: 10px; width: 100%; text-align: center; font-size: 22px; font-weight: bold; pointer-events: none; z-index: 10; }
-        .number-bubble { position: absolute; width: 55px; height: 55px; background: #007bff; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 22px; box-shadow: 0 4px #0056b3; cursor: pointer; }
+        .number-bubble { position: absolute; width: 55px; height: 55px; background: #007bff; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 22px; box-shadow: 0 4px #0056b3; cursor: pointer; transition: opacity 0.1s; }
         
-        /* メニュー画面 */
+        /* メニュー/リザルト画面 */
         #menuScreen { 
             position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
             background: rgba(255,255,255,0.98); display: flex; flex-direction: column; 
-            align-items: center; justify-content: space-evenly; z-index: 200; padding: 20px 0; box-sizing: border-box;
+            align-items: center; justify-content: flex-start; z-index: 200; padding: 30px 0; box-sizing: border-box;
+        }
+
+        /* リザルト用の中サイズ広告エリア */
+        #mid-ad-container {
+            width: 300px; height: 250px; background: #eee; margin: 20px 0;
+            display: flex; align-items: center; justify-content: center;
         }
 
         /* 大広告オーバーレイ */
@@ -47,9 +53,10 @@
             align-items: center; justify-content: center; z-index: 2100;
         }
         
-        .btn-group { display: flex; flex-direction: column; align-items: center; gap: 10px; flex-shrink: 0; }
-        .menu-btn { padding: 12px 30px; font-size: 18px; border: none; border-radius: 50px; color: white; font-weight: bold; cursor: pointer; text-decoration: none; width: 240px; text-align: center; }
-        #goButton { background: #28a745; box-shadow: 0 4px #1e7e34; }
+        .btn-group { display: flex; flex-direction: column; align-items: center; gap: 12px; width: 100%; }
+        .menu-btn { padding: 15px 30px; font-size: 18px; border: none; border-radius: 50px; color: white; font-weight: bold; cursor: pointer; text-decoration: none; width: 240px; text-align: center; }
+        #goButton { background: #28a745; box-shadow: 0 4px #1e7e34; transition: opacity 0.3s; }
+        #goButton:disabled { background: #94a3b8; box-shadow: 0 4px #64748b; cursor: default; }
         .link-btn { background: #ff4081; box-shadow: 0 4px #c2185b; }
     </style>
 </head>
@@ -61,8 +68,15 @@
         
         <div id="menuScreen">
             <div style="text-align:center;">
-                <h2 id="menuTitle" style="color:#28a745; margin:0;">NUMBER HUNTER</h2>
-                <p id="menuMsg" style="margin:5px 0;">数字を順番にタップ！</p>
+                <h2 id="menuTitle" style="color:#28a745; margin:0; font-size: 32px;">NUMBER HUNTER</h2>
+                <p id="menuMsg" style="margin:10px 0; font-size: 18px;">数字を順番にタップ！</p>
+            </div>
+
+            <div id="mid-ad-container">
+                <div id="im-8b988d7b042a42d5b8df6921b628cf00">
+                    <script async src="https://imp-adedge.i-mobile.co.jp/script/v1/spot.js?20220104"></script>
+                    <script>(window.adsbyimobile=window.adsbyimobile||[]).push({pid:84561,mid:590804,asid:1924211,type:"banner",display:"inline",elementid:"im-8b988d7b042a42d5b8df6921b628cf00"})</script>
+                </div>
             </div>
 
             <div class="btn-group" id="btnGroup">
@@ -84,16 +98,20 @@
     <div id="ad-bottom"><iframe id="ifr-bottom" src="ad.html?pos=bottom"></iframe></div>
 
     <script>
-        // --- 広告リフレッシュタイマー（30秒） ---
+        // --- 広告リフレッシュ ---
         setInterval(() => {
-            const topAd = document.getElementById('ifr-top');
-            const bottomAd = document.getElementById('ifr-bottom');
             const now = Date.now();
-            if(topAd) topAd.src = 'ad.html?pos=top&t=' + now;
-            if(bottomAd) bottomAd.src = 'ad.html?pos=bottom&t=' + now;
+            document.getElementById('ifr-top').src = 'ad.html?pos=top&t=' + now;
+            document.getElementById('ifr-bottom').src = 'ad.html?pos=bottom&t=' + now;
         }, 30000);
 
-        const container = document.getElementById("game-container"), nextDisplay = document.getElementById("next-num"), menuScreen = document.getElementById("menuScreen"), menuTitle = document.getElementById("menuTitle"), menuMsg = document.getElementById("menuMsg"), goButton = document.getElementById("goButton"), btnGroup = document.getElementById("btnGroup");
+        const container = document.getElementById("game-container"), 
+              nextDisplay = document.getElementById("next-num"), 
+              menuScreen = document.getElementById("menuScreen"), 
+              menuTitle = document.getElementById("menuTitle"), 
+              menuMsg = document.getElementById("menuMsg"), 
+              goButton = document.getElementById("goButton");
+        
         let currentTarget = 1, gameActive = false, nextSpawnValue = 1, playCount = 0;
 
         goButton.onclick = () => {
@@ -109,6 +127,7 @@
             bubble.className = "number-bubble"; bubble.innerText = val;
             const maxX = container.clientWidth - 60, maxY = container.clientHeight - 60;
             bubble.style.left = Math.random() * maxX + "px"; bubble.style.top = Math.random() * maxY + "px";
+            
             bubble.onpointerdown = (e) => {
                 e.preventDefault(); if(!gameActive) return;
                 if(val === currentTarget) {
@@ -121,19 +140,29 @@
 
         function gameOver() {
             gameActive = false;
-            playCount++; // プレイ回数を加算
+            playCount++;
             menuTitle.innerText = "GAME OVER"; menuTitle.style.color = "#f44336";
-            menuMsg.innerText = "SCORE: " + (currentTarget - 1); goButton.innerText = "RETRY";
+            menuMsg.innerText = "SCORE: " + (currentTarget - 1);
             
-            // ★ゆったり設定に変更（初回3回目、以降7回おき）
+            // ボタンのディレイ処理
+            goButton.innerText = "お待ちください...";
+            goButton.disabled = true;
+            menuScreen.style.display = "flex";
+
+            setTimeout(() => {
+                goButton.disabled = false;
+                goButton.innerText = "RETRY";
+            }, 1200); // 1.2秒間広告を強制視認
+            
+            // 大広告フラグ（指定回数で表示）
             if (playCount === 3 || (playCount > 3 && (playCount - 3) % 7 === 0)) {
-                showBigAd();
-            } else {
-                menuScreen.style.display = "flex";
+                // リザルト表示から少し遅らせて大広告
+                setTimeout(() => {
+                    if(!gameActive) showBigAd();
+                }, 500);
             }
         }
 
-        // --- 大広告システム（ad.large.html） ---
         function showBigAd() {
             const screen = document.getElementById("bigAdScreen");
             const closeBtn = document.getElementById("ad-close-btn");
@@ -141,13 +170,12 @@
             frame.src = "ad.large.html?t=" + Date.now();
             screen.style.display = "flex";
             closeBtn.style.display = "none";
-            setTimeout(() => { closeBtn.style.display = "flex"; }, 5000); // 5秒待機
+            setTimeout(() => { closeBtn.style.display = "flex"; }, 5000);
         }
 
         function closeAd() {
             document.getElementById("bigAdScreen").style.display = "none";
             document.getElementById("ad-large-frame").src = "";
-            menuScreen.style.display = "flex";
         }
     </script>
 </body>
