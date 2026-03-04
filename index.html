@@ -98,12 +98,6 @@
     <div id="ad-bottom"><iframe id="ifr-bottom" src="ad.html?pos=bottom"></iframe></div>
 
     <script>
-        // --- 広告リフレッシュ ---
-        setInterval(() => {
-            const now = Date.now();
-            document.getElementById('ifr-top').src = 'ad.html?pos=top&t=' + now;
-            document.getElementById('ifr-bottom').src = 'ad.html?pos=bottom&t=' + now;
-        }, 30000);
 
         const container = document.getElementById("game-container"), 
               nextDisplay = document.getElementById("next-num"), 
